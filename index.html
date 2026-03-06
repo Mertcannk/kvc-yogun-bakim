@@ -1522,4 +1522,181 @@ function openISBAR() {
   if (sAuto) {
     const shockActive = document.getElementById('cdss-shock-banner')?.classList.contains('active');
     const oligActive  = document.getElementById('oliguri-alert')?.classList.contains('active');
-    sAuto.innerHTML = `<b>Vital Bulgular:</b><br>&nbsp;• KB: ${g('v-kb')} mmHg &nbsp;| Nabız: ${g('v-nab')} /dk<br>&nbsp;• SpO₂: ${g('v-spo2')}% &nbsp;| Solunum: ${g('v-sol')} /dk<br>&nbsp;• OAB
+    sAuto.innerHTML = `<b>Vital Bulgular:</b><br>&nbsp;• KB: ${g('v-kb')} mmHg &nbsp;| Nabız: ${g('v-nab')} /dk<br>&nbsp;• SpO₂: ${g('v-spo2')}% &nbsp;| Solunum: ${g('v-sol')} /dk<br>&nbsp;• OAB (MAP): ${g('v-map')} mmHg &nbsp;| CVP: ${g('v-cvp')} cmH₂O<br>&nbsp;• Isı: ${g('v-isi')}°C &nbsp;| ACT: ${g('v-act')} sn &nbsp;| KŞ: ${g('v-ks')} mg/dL<br><br><b>Nörolojik:</b> GCS ${gcsTotal}/15 — ${gcsLbl}<br><b>Braden Skoru:</b> ${bradTot} (${bradRisk})<br><b>Sıvı Dengesi:</b> ${balance} &nbsp;| <b>Total Drenaj:</b> ${totDren}<br>${shockActive ? '<br>⚠️ <b style="color:#dc2626">CDSS ALARMI: Şok/Düşük Perfüzyon Riski aktif!</b>' : ''}${oligActive  ? '<br>⚠️ <b style="color:#dc2626">OLİGÜRİ ALARMI aktif!</b>' : ''}`;
+  }
+
+  const icdList = curIcd10.length > 0 ? curIcd10.map((c,i) => `&nbsp;${i+1}. ${c}`).join('<br>') : g('p-tani') || 'Girilmedi';
+  const bAuto = document.getElementById('isbar-B-auto');
+  if (bAuto) bAuto.innerHTML = `<b>Ameliyat Türü:</b> ${g('p-amel')}<br><b>Ameliyat Tarihi:</b> ${g('p-tarih')} &nbsp;(Post-op ${g('p-pop')}. gün)<br><b>ICD-10 Tanılar:</b><br>${icdList}<br><br><b>Kan Gazı — pH:</b> ${g('lab-ph')} &nbsp;|&nbsp;<b>pCO₂:</b> ${g('lab-pco2')} &nbsp;|&nbsp;<b>HCO₃⁻:</b> ${g('lab-hco3')}<br><b>Laktat:</b> ${g('lab-laktat')} mmol/L &nbsp;|&nbsp;<b>ABG:</b> ${document.getElementById('abg-result-val')?.textContent || '—'}`;
+
+  document.getElementById('modal-isbar').classList.add('active');
+}
+function closeISBAR() { document.getElementById('modal-isbar').classList.remove('active'); }
+
+function buildISBARText() {
+  const g    = id => document.getElementById(id)?.value || '—';
+  const gTxt = id => document.getElementById(id)?.textContent || '—';
+  const now  = new Date().toLocaleDateString('tr-TR') + ' ' + new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  const sep  = '═'.repeat(38), ln = '─'.repeat(38);
+  const icdText = curIcd10.length > 0 ? curIcd10.map((c,i)=>`  ${i+1}. ${c}`).join('\n') : g('p-tani') || '—';
+  const assessment = document.getElementById('isbar-A-text')?.value || '(Değerlendirme girilmedi)';
+  const recommendation = document.getElementById('isbar-R-text')?.value || '(Öneri girilmedi)';
+  const shockActive = document.getElementById('cdss-shock-banner')?.classList.contains('active');
+  const oligActive  = document.getElementById('oliguri-alert')?.classList.contains('active');
+  const alarms = [shockActive ? '🚨 CDSS: Şok/Düşük Perfüzyon Riski AKTİF!' : null, oligActive  ? '⚠️ OLİGÜRİ ALARMI AKTİF!' : null].filter(Boolean).join('\n');
+
+  return `${sep}\n📋 ISBAR DEVİR TESLİM RAPORU\n🏥 Göztepe Prof. Dr. Süleyman Yalçın Şehir Hastanesi — KVC YBÜ\n📅 ${now}${curUser ? ' | Hazırlayan: ' + curUser.name : ''}\n${sep}\n\n[I] İDENTİFİKASYON\n${ln}\nAd Soyad  : ${g('p-adi')}\nTC        : ${g('p-tc')}\nYaş/Cins  : ${g('p-yas')} yaş / ${g('p-cins')}\nYatak     : ${g('p-yatak')}\nDoktor    : ${g('p-doktor')}  |  Hemşire: ${g('p-hemsire')}\n\n[S] DURUM (SITUATION)\n${ln}\nKB        : ${g('v-kb')} mmHg   |  Nabız: ${g('v-nab')} /dk\nSpO₂      : ${g('v-spo2')}%      |  Solunum: ${g('v-sol')} /dk\nOAB(MAP)  : ${g('v-map')} mmHg  |  CVP: ${g('v-cvp')} cmH₂O\nIsı       : ${g('v-isi')}°C     |  ACT: ${g('v-act')} sn\nKŞ        : ${g('v-ks')} mg/dL\nGCS       : ${gTxt('gcs-tot')}/15 — ${gTxt('gcs-lbl')}\nBraden    : ${gTxt('brad-tot')} (${gTxt('brad-risk')})\nSıvı D.   : ${gTxt('balance')}  |  Drenaj: ${gTxt('tot-dren')}\n${alarms ? '\n⚠️ ALARMLAR:\n' + alarms : ''}\n\n[B] ARKA PLAN (BACKGROUND)\n${ln}\nAmeliyat  : ${g('p-amel')} — ${g('p-tarih')} (Post-op ${g('p-pop')}. gün)\nICD-10    :\n${icdText}\nKan Gazı  : pH ${g('lab-ph')} | pCO₂ ${g('lab-pco2')} | HCO₃⁻ ${g('lab-hco3')} | Laktat ${g('lab-laktat')}\nABG Yorum : ${gTxt('abg-result-val')}\n\n[A] DEĞERLENDİRME (ASSESSMENT)\n${ln}\n${assessment}\n\n[R] ÖNERİ (RECOMMENDATION)\n${ln}\n${recommendation}\n\n${sep}`;
+}
+
+async function copyISBAR() {
+  try { await navigator.clipboard.writeText(buildISBARText()); showT('✓ ISBAR raporu panoya kopyalandı!', 'ok'); } 
+  catch(e) { showT('Kopyalama başarısız — lütfen manuel kopyalayın.', 'err'); }
+}
+
+async function saveISBAR() {
+  const text = buildISBARText(), now = new Date();
+  const tStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const author = curUser ? curUser.name + ' (' + curUser.role + ')' : 'Sistem';
+
+  const container = document.getElementById('notes-nurse');
+  if (container) {
+    const el = document.createElement('div'); el.className = 'ne fi'; el.style.cssText = 'border-left:3px solid var(--accent);background:var(--accentBg);';
+    el.innerHTML = `<div class="nm"><span class="nt" style="color:var(--accent)">📋 ISBAR — ${tStr}</span><span class="na">${author}</span></div><div class="ntxt" style="font-family:var(--mono);font-size:11px;white-space:pre-wrap;line-height:1.6;">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    container.appendChild(el);
+  }
+
+  setRTStatus('syncing');
+  try {
+    const currentP = patients.find(p=>p.id===curId);
+    if (currentP) {
+      if (!currentP.isbarLogs) currentP.isbarLogs = [];
+      currentP.isbarLogs.push({ ts: Date.now(), author: curUser?.name||'Sistem', text });
+      await CloudDatabase.savePatient(currentP);
+    }
+    setRTStatus('online');
+  } catch(e) { setRTStatus('offline'); }
+  closeISBAR();
+  
+  const notBtn = document.querySelector('.tb:last-child');
+  if (notBtn) notBtn.click();
+  showT('✓ ISBAR raporu notlara & buluta kaydedildi!', 'ok');
+}
+
+let tt; function showT(msg,type=''){ const el=document.getElementById('toast-el'); el.textContent=msg; el.className='toast '+type; clearTimeout(tt); setTimeout(()=>el.classList.add('show'),10); tt=setTimeout(()=>el.classList.remove('show'),2700); }
+
+function dlPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const g=id=>document.getElementById(id)?.value||'—';
+  const PUR=[124,58,237],DRK=[20,10,40],GRY=[110,100,150],LGT=[237,233,254];
+  const now=new Date(),ns=now.toLocaleDateString('tr-TR')+' '+now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  doc.setFillColor(...PUR); doc.rect(0,0,210,24,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text('T.C. SAĞLIK BAKANLIĞI',14,9);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Göztepe Prof. Dr. Süleyman Yalçın Şehir Hastanesi',14,15);
+  doc.text('KVC YOĞUN BAKIM TAKİP FORMU — YB.FR.27',14,21);
+  doc.setFontSize(7);doc.text('Basım: '+ns,196,10,{align:'right'});
+  doc.setFillColor(90,30,200);doc.rect(0,24,210,1,'F');
+  let y=32;
+  const sec=t=>{doc.setFillColor(...LGT);doc.roundedRect(12,y-4,186,9,2,2,'F');doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...PUR);doc.text(t.toUpperCase(),15,y+1);y+=10;doc.setTextColor(...DRK);};
+  const r2=(l1,v1,l2,v2)=>{doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...GRY);doc.text(l1+':',15,y);doc.setFont('helvetica','normal');doc.setTextColor(...DRK);doc.text(String(v1),52,y);doc.setFont('helvetica','bold');doc.setTextColor(...GRY);doc.text(l2+':',110,y);doc.setFont('helvetica','normal');doc.setTextColor(...DRK);doc.text(String(v2),150,y);y+=5.5;};
+  const r1=(l,v)=>{doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...GRY);doc.text(l+':',15,y);doc.setFont('helvetica','normal');doc.setTextColor(...DRK);const ls=doc.splitTextToSize(String(v),148);doc.text(ls,52,y);y+=ls.length*4.5+1;};
+  const divl=()=>{doc.setDrawColor(210,200,240);doc.setLineWidth(.3);doc.line(12,y,198,y);y+=4;};
+  const chk=()=>{if(y>272){doc.addPage();y=20;}};
+  sec('HASTA BİLGİSİ');
+  r2('Ad Soyad',g('p-adi'),'TC Kimlik',g('p-tc'));
+  r2('Yaş / Cinsiyet',g('p-yas')+' / '+g('p-cins'),'Yatak',g('p-yatak'));
+  r2('Ameliyat Türü',g('p-amel'),'Tarih',g('p-tarih'));
+  r2('Post-op Gün',g('p-pop')+'. gün','Doktor',g('p-doktor'));
+  r1('Hemşire',g('p-hemsire'));r1('Tanı',g('p-tani'));y+=2;divl();
+  sec('VİTAL BULGULAR');
+  r2('Kan Basıncı',g('v-kb')+' mmHg','Nabız',g('v-nab')+' /dk');
+  r2('SpO₂',g('v-spo2')+'%','Solunum',g('v-sol')+' /dk');
+  r2('Isı',g('v-isi')+'°C','ACT',g('v-act')+' sn');
+  r2('OAB (MAP)',g('v-map')+' mmHg','CVP',g('v-cvp')+' cmH₂O');
+  r1('Kan Şekeri',g('v-ks')+' mg/dL');y+=2;divl();
+  sec('KLİNİK DEĞERLENDİRME');
+  const gcsE=document.getElementById('gcs-e').textContent,gcsM=document.getElementById('gcs-m').textContent,gcsV=document.getElementById('gcs-v').textContent,gcsT=document.getElementById('gcs-tot').textContent;
+  r2('GCS (E+M+V)',`${gcsE}+${gcsM}+${gcsV} = ${gcsT}`,'Braden',document.getElementById('brad-tot').textContent+' — '+document.getElementById('brad-risk').textContent);
+  y+=2;divl();chk();
+  sec('DRENAJ');
+  const dvs=Array.from(document.querySelectorAll('.dv'));
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(...DRK);doc.text(dvs.map((d,i)=>`Dren ${i+1}: ${d.value||0} cc`).join('   '),15,y);y+=5.5;
+  r2('Total Drenaj',document.getElementById('tot-dren').textContent,'Sıvı Dengesi',document.getElementById('balance').textContent);
+  y+=2;divl();chk();
+  sec('İLAÇ TAKİBİ');
+  const meds=document.querySelectorAll('#med-list .mc');
+  if(meds.length){meds.forEach(mc=>{const nm=mc.querySelector('.mn')?.textContent||'—',ds=mc.querySelector('.mdb')?.textContent||'—',rt=mc.querySelector('.mr')?.textContent||'';const gn=mc.querySelectorAll('.ts.given').length,tot=mc.querySelectorAll('.ts').length;doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...DRK);doc.text(`• ${nm} (${ds}) — ${rt}`,15,y);doc.setFont('helvetica','normal');doc.setTextColor(...GRY);doc.text(`[${gn}/${tot} doz]`,165,y);y+=5;chk();});}
+  else{doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(...GRY);doc.text('İlaç kaydı yok',15,y);y+=5;}
+  y+=2;divl();chk();
+  const nn=document.querySelectorAll('#notes-nurse .ne'),dn=document.querySelectorAll('#notes-doctor .ne');
+  if(nn.length||dn.length){sec('GÖZLEM NOTLARI');[...nn,...dn].forEach(n=>{const ti=n.querySelector('.nt')?.textContent||'',tx=n.querySelector('.ntxt')?.textContent||'',au=n.querySelector('.na')?.textContent||'';doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...PUR);doc.text(`[${ti}] ${au}:`,15,y);doc.setFont('helvetica','normal');doc.setTextColor(...DRK);const ls=doc.splitTextToSize(tx,148);doc.text(ls,15,y+4.5);y+=ls.length*4.5+7;chk();});}
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFillColor(...PUR);doc.rect(0,287,210,10,'F');doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(255,255,255);doc.text(`Göztepe Prof. Dr. Süleyman Yalçın Şehir Hastanesi — KVC YBÜ Takip Formu — ${ns}`,14,293);doc.text(`Sayfa ${i}/${pages}`,196,293,{align:'right'});}
+  doc.save(`KVC_Takip_${(g('p-adi')).replace(/\s+/g,'_')}_${g('p-tarih')}.pdf`);
+  showT('✓ PDF indirildi','ok');
+}
+
+function _onRealtimeUpdate(event) {
+  if (event.type === 'UPDATE' && event.data.id === curId) {
+    const idx = patients.findIndex(p => p.id === event.data.id);
+    if (idx >= 0) patients[idx] = event.data;
+    showT('🔄 Sunucudan güncelleme alındı: ' + event.data.adi, 'ok');
+  }
+}
+
+async function _loadPatientsFromCloud() {
+  showLoader('Hastalar yükleniyor...', 'Bulut veri katmanı bağlanıyor');
+  try {
+    patients = await CloudDatabase.getPatients();
+    hideLoader();
+    if (patients.length > 0) { loadP(patients[0]); }
+    return patients;
+  } catch(e) {
+    hideLoader();
+    showT('Hasta verisi yüklenemedi: ' + e.message, 'err');
+    return patients; 
+  }
+}
+
+function quickLogin(uname, pass) {
+  document.getElementById('login-user').value = uname;
+  document.getElementById('login-pass').value = pass;
+  doLogin();
+}
+
+async function _initApp() {
+  document.getElementById('p-tarih').valueAsDate = new Date();
+  renderBraden();
+  var styleEl = document.createElement('style');
+  styleEl.textContent='@keyframes fadeOut{to{opacity:0;pointer-events:none}}';
+  document.head.appendChild(styleEl);
+
+  setTimeout(function(){
+    var spl = document.getElementById('scr-splash');
+    spl.style.animation='fadeOut .4s forwards';
+    setTimeout(async function() {
+      spl.style.animation='';
+      sw('scr-auth');
+      try {
+        const session = await CloudDatabase.restoreSession();
+        if (session) {
+          curUser = session.user;
+          document.getElementById('hdr-user-tag').textContent = curUser.name;
+          setRTStatus('online');
+          sw('scr-detail');
+          await _loadPatientsFromCloud();
+          showT('Oturum geri yüklendi: ' + curUser.name.split(' ')[0], 'ok');
+        }
+      } catch(e) { }
+    }, 380);
+  }, 1500);
+
+  loadP(patients[0]);
+}
+
+_initApp();
+</script>
+
+</body>
+</html>
